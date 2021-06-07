@@ -12,6 +12,9 @@ data class AutorRequest(
     @field:NotBlank @field:Size(max = 400) val descricao: String
 ) {
 
+    fun converteAutorRequestParaAutor(): Autor {
+        return Autor(nome, email, descricao)
+    }
 }
 
 
