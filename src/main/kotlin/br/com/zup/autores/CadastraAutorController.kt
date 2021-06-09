@@ -2,7 +2,9 @@ package br.com.zup.autores
 
 import br.com.zup.client.EnderecoClient
 import io.micronaut.http.HttpResponse
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Body
+import io.micronaut.http.annotation.Consumes
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
 import io.micronaut.http.uri.UriBuilder
@@ -20,7 +22,6 @@ class CadastraAutorController(
     fun cadastra(@Body @Valid request: AutorRequest): HttpResponse<Any> {
 
         val enderecoResponse = enderecoClient.consulta(request.cep)
-
         val autor = request.converteAutorRequestParaAutor(enderecoResponse.body()!!)
         autorRepository.save(autor)
 
