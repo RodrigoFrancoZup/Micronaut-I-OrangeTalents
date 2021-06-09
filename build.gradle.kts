@@ -41,7 +41,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     runtimeOnly("ch.qos.logback:logback-classic")
     implementation("io.micronaut:micronaut-validation")
-    implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.micronaut.xml:micronaut-jackson-xml")
 

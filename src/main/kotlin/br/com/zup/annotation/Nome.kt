@@ -11,7 +11,7 @@ import kotlin.annotation.AnnotationTarget.FIELD
 @Retention(RUNTIME)
 @Constraint(validatedBy = [NomeValidator::class])
 annotation class Nome(
-    val message: String = "O que você digitou não é nome válido!"
+    val message: String = "O que você digitou não é nome válido!",
 )
 
 
