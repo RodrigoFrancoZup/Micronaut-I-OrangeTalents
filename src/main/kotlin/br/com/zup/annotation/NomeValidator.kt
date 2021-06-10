@@ -17,7 +17,7 @@ class NomeValidator : ConstraintValidator<Nome, String> {
         if (value == null) {
             return true
         }
-        return value.matches("[A-Z][a-z].* [A-Z][a-z].*".toRegex())
+        return value.matches("[A-Z][a-z]* [A-Z][a-z]*".toRegex())
     }
 
 }
