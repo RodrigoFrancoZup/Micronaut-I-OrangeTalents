@@ -1,0 +1,15 @@
+Mapeando queries explicitamente no Micronaut Data:
+
+No capítulo anterior criamos no Repository uma busca sem utilizar Query, fizemos a busca usando a property da entidade juntamente com a palavra findBy, mas também podemos escrever a query. Podemos escrever a Query com SQL nativo ou com JPQL. Vamos exemplificar essas casos:
+Todos exemplos serão escritos na interface AutorRepository.
+
+Exemplo sem Query (Usando findBy + Property):
+	fun findByEmail(email: String) : Optional<Autor>
+
+Exemplo com JPQL:
+	@Query("SELECT a FROM Autor a WHERE a.email = :email") fun 	
+	buscaByEmailJPQL(email: String) : Optional<Autor>
+
+Exemplo com SQL Nativo:
+	@Query(value = "SELECT * FROM Autor a WHERE a.email like :email", nativeQuery = true) fun 	
+	buscaByEmailSQL(email: String) : Optional<Autor>

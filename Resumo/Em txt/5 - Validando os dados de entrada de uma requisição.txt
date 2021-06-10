@@ -1,0 +1,37 @@
+
+Validando os dados de entrada de uma requisição:
+
+No projeto Java com Spring nós validavamos os dados com as anotações do Bean Validation na classe que entrava com os dados, ou seja, anotavamos os atributos de classes do tipo FORM, REQUEST, etc...
+Aqui vamos fazer a mesma coisa, utilizar as mesmas anotações. Para isso devemos ter a biblioteca do Bean Validation no projeto e se vermos o nosso projeto já veio com a biblioteca: 
+	implementation("io.micronaut:micronaut-validation")
+1) Nessa biblioteca temos apenas as anotações mais comuns, se quisermos ter uma biblioteca mais completa devemos adicionar a:
+implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
+Vamos adicionar essa em nosso projeto, devemos colocá-la no arquivo build.gradle.kts dentro da seção dependencies{}
+
+2)Agora na classe AutorRequest podemos usar as anotações, mas antes disso devemos anotar a classe AutorRequest com @Introspected. Lembra que uma das vantagens do Micronaut era não utilizar o Reflection, que em tempo de compilação ele já criava e gerenciava todos os Beans? Então, essa anotação vai permitir isso nessa classe, que suas properties sejam acessadas em tempo de compilação.
+
+3)Agora vamos aplicar as anotações que já conhecemos, por exemplo:@NotBlank, @Email, @Size, etc, nas properties. Mas teremos uma pequena mudança, pois no Java com Spring aplicavamos isso nos atributos e agora não declaramos atributo, na verdade colocamos na classe um Construtor com properties e por isso teremos o seguinte problema, algunas anotações podem ser aplicadas em atributos, nos construtores, na classe, ou seja, em diversos lugares, então para o Kotlin não se perder temos que indicar essa anotação é para ser aplicada na propertie (no seu valor) e para isso temos que usar @field:Anotacao, por exemplo: @field:NotBlank. Ficará assim:
+
+@Introspected
+data class AutorRequest(
+    @field:NotBlank val nome: String,
+    @field:NotBlank @field:Email val email: String,
+    @field:NotBlank @field:Size(max = 400) val descricao: String
+) {
+
+}
+
+4)Agora na classe controller devemos indicar que essa classe terá validações, então essa classe vai ser anotada com @Validated
+Isso já não precisavamos fazer no Spring, mas agora será obrigatório!
+
+5)Na função cadastra() da classe AutorController devemos indicar que o objeto AutorRequest que vem no corpo da requisição será validado, é igual faziamos no Spring, e para isso adicionamos a anotação @Valid. A classe ficará assim:
+@Controller("/autores")
+@Validated
+class AutorController {
+
+    @Post
+    fun cadastra(@Body @Valid request: AutorRequest){
+        println(request)
+    }
+}
+

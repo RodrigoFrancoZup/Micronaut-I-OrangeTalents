@@ -1,0 +1,80 @@
+Micronaut Testing - como testar uma API REST:
+
+Vamos criar um teste para testar a consulta de Autor por email. Para isso vamos ter que criar um Autor com email X e depois verificar a busca por Autor com email X (se tudo estiver correto vamos encontrar o Autor) e por fim apagar esse Autor do banco de dados. Para fazer isso basta seguir o passo a passo:
+
+1) Podemos criar a classe AutorPorEmailControllerTest ou então selecionar a classe AutorPorEmailController, clicar com "Alt + Enter" e escolher a opção test com Junit 5, dessa forma a IDE criará a classe para nos. Depois da classe criada devemos deixá-la assim:
+
+@MicronautTest
+internal class AutorPorEmailControllerTest{
+
+    @field:Inject
+    @field:Client("/")
+    lateinit var client: HttpClient
+
+}
+
+A classe recebeu a anotação @MicronautTest para podermos subir o contexto do Micronaut durante o teste, e criamos um client http para poder fazer a requisição. A anotação @field:Inject é para o Micronaut criar esse objeto e a segunda é para configurar o client http com o endereço que ele fará a requisição.
+
+2) Criar agora a função que testará. Podemos clicar com "alt + insert" e selecionar Test Function -> Junit5 e por fim dar um nome a função. Ficando assim:
+
+@Test
+internal fun deveRetonarOsDetalhesDeUmAutor() {
+    TODO("Not yet implemented")
+}
+
+3) Só que antes de implementar a função que testa de fato vamos criar a função setUp(), essa função é executada sempre antes do teste, e nela vamos criar e salvar um autor. Ficando assim:
+
+@BeforeEach
+internal fun setUp() {
+    val enderecoResponse =
+        EnderecoResponse(logradouro = "Rua das Laranjeiras", localidade = "Rio de Janeiro", uf = "RJ")
+    val endereco = Endereco(enderecoResponse = enderecoResponse, numero = "55")
+    autor = Autor(
+        nome = "Rafael Ponte",
+        email = "rafael.ponte@zup.com.br",
+        descricao = "O mentor da OT4",
+        endereco = endereco
+    )
+
+    autorRepository.save(autor)
+}
+
+Essa função pode ser criada com ajuda da IDE, apertando "alt+insert" -> Setup Function
+
+4) Agora podemos começar a fazer a função deveRetonarOsDetalhesDeUmAutor. Ela ficará assim?
+@Test
+internal fun deveRetonarOsDetalhesDeUmAutor() {
+    
+    val response =
+        client.toBlocking().exchange("/autor/email?email=${autor.email}", AutorResponse::class.java)
+    assertEquals(HttpStatus.OK, response.status)
+    assertNotNull(response.body())
+    assertEquals(autor.nome, response.body()!!.nome)
+    assertEquals(autor.email, response.body()!!.email)
+    assertEquals(autor.descricao, response.body()!!.descricao)
+}
+
+Usamos a função toBlocking(), pois o Client por padão utiliza métodos reativos, que podem a vir executar no futuro e em outra thread, com o toBlocking() vamos garantir que será executado agora na mesma thread.
+Depois chamamos a função exchange, passando qual o complemento da URI deve fazer a requisição e a classe que irá guardar o resultado;
+Estamos com um erro na variável Autor, é normal, vamos criá-la ainda.
+
+5)Depois do teste podemos deletar o autor inserido, por isso fizemos a função:
+@AfterEach
+internal fun tearDown() {
+    autorRepository.delete(autor)
+}
+Essa função é executada sempre após o fim do teste. A IDE nos ajuda com sua criação, basta apertar "alt+insert" -> tearDown Function.
+
+6) Agora podemos testar! Obs: Para funcionar a property endereco da classe Autor teve que ser nullable, ficando assim:
+
+class Autor(
+    val nome: String,
+    val email: String,
+    var descricao: String,
+    @field:Embedded val endereco: Endereco?
+)
+
+
+
+
+

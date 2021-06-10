@@ -1,0 +1,76 @@
+Gravando os dados com Micronaut Data:
+
+Da mesma forma no Java Spring, vamos precisar adicionar no nosso projeto algumas dependencias para utilizarmos um banco de dados, lá no Spring colocavamos duas: Spring Data Jpa e o Driver do Banco. Aqui vamos precisar colocar 3: 
+Primeira = a do Pull de Conexoes (essa o Spring já colocava por padrão, por isso lá colocavamos apenas duas);
+Segunda = Micronaut Data Jpa;
+Terceira = Driver do Banco de dados que vai utilizar.
+As dependencias são adicionadas no arquivo build.gradle
+Depois igual no Spring, vamos ter que inserir na nossa aplicação as configurações do banco, ou seja, informar usuário, senha, URL, etc. E isso será feito no arquivo application.yml
+Com tudo configurado poderemos criar os Repositories igual criavamos no Spring, só que agora é obrigatório anotar a nossa interface Repository com @Repository, isso no Spring era opcional!
+
+Para fazer tudo isso, basta seguir o passo a passo:
+
+1)Vamos adicionar 3 dependencias no arquivo build.gradle.kt, nas seção dependencies as dependencias:
+runtime("io.micronaut.sql:micronaut-jdbc-hikari")
+implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+implementation("mysql:mysql-connector-java:8.0.25")
+
+2)Vamos agora inserir na nossa aplicação as configurações do banco de dados (primeiro bloco) e depois as configurações para o banco criar as tabelas, mostrar o sql, etc.(Segundo bloco) . O arquivo application.yml vai ficar assim:
+
+datasources:
+  default:
+    url: jdbc:mysql://localhost/micronaut-ksa-do-kodigo
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: root
+    password: mysql
+    schema-generate: CREATE_DROP
+    dialect: MySQL
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+      show_sql: true
+
+
+3) Transformar a classe Autor em uma entidade, ou seja, devemos anotá-la com @Entity e aqui temos algo legal, todas classes Entitys são Introspected, logo não vamos precisar desse anotação, apenas @Entity basta. Devemos criar também a property id que será do tipo Long e será anotada com @Id e @GeneratedValue, só que essa property não pode ficar dentro do construtor, deverá ser do tipo var e poderá ser nula. A classe vai ficar assim:
+
+@Entity
+class Autor(
+    val nome: String,
+    val email: String,
+    val descricao: String
+) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+    
+    val criadoEm: LocalDateTime = LocalDateTime.now()
+
+}
+
+4)Agora vamos criar a interface chamada AutorRepository, essa interface deve ser anotada com @Repository e deve herdar a interface JpaRepository<Autor,Long>, ficando assim:
+
+@Repository
+interface AutorRepository : JpaRepository<Autor, Long>{
+}
+
+5) Na classe AutorController agora precisamos criar uma instancia de AutorRepository, no Spring usavamos @Autowired ou recebia no construtor da classe a injeção de dependencia. Aqui vamos sempre utilizar no construtor da classe para injeção de dependencia, ficando assim:
+
+@Controller("/autores")
+@Validated
+class AutorController ( val autorRepository: AutorRepository) {
+
+    @Post
+    fun cadastra(@Body @Valid request: AutorRequest) {
+        val autor = request.converteAutorRequestParaAutor()
+        autorRepository.save(autor)
+    }
+}
+
+
+
+
+

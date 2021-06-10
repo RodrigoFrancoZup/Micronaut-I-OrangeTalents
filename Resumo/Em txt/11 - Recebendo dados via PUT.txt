@@ -1,0 +1,28 @@
+Recebendo dados via PUT:
+
+Adotamos a estrategia de criar um controller para cada funcionalidade, então vamos criar a classe AtualizaAutorController, essa classe será anotada com @Controller("/autores/{id}"). Essa classe terá um metodo chamado atualiza() e esse metodo será anotado com @Put. Esse método receberá dois parametros, o id: Long que será anotado com @PathVariable e a descricao: String. O corpo desse método será muito parecido com Spring, vamos ter que fazer a busca de um autor pelo id informado no path (url), se não encontrar retornaremos 404, se encontrar basta fazer a atualização. Agora vem a diferença do Spring, lá usavamos o método save() para salvar e/ou atualizar um objeto, já no Micronaut devemos usar o update() para atualizar!
+Obs: Optamos por atualizar somente a property descricao. Teremos que alterar essa property de val para var!
+Obs2: Como estamos atualizando só um campo o mais correto seria utilizar o verbo Patch no lugar do Put.
+
+A classe ficará assim:
+
+@Controller("/autores/{id}")
+class AtualizaAutorController(val autorRepository: AutorRepository) {
+
+    @Put
+    fun atualiza(@PathVariable id: Long, descricao: String): HttpResponse<Any> {
+
+        val possivelAutor = autorRepository.findById(id)
+        if (possivelAutor.isEmpty) {
+            return HttpResponse.notFound()
+        }
+
+        val autor = possivelAutor.get()
+        autor.descricao = descricao
+        autorRepository.update(autor)
+
+        return HttpResponse.ok(AutorResponse(autor))
+    }
+}
+
+

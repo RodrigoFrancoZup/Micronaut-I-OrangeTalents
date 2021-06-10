@@ -1,0 +1,22 @@
+Recebendo dados via DELETE:
+
+Adotamos a estrategia de criar um controller para cada funcionalidade, então vamos criar a classe DeletaAutorController, essa classe será anotada com @Controller("/autores/{id}"). Essa classe terá um metodo chamado deleta() e esse metodo será anotado com @Delete. Esse método receberá o parametro, o id: Long que será anotado com @PathVariable. O corpo desse método será muito parecido com Spring, vamos ter que fazer a busca de um autor pelo id informado no path (url), se não encontrar retornaremos 404, se encontrar basta fazer a deleção. Para deletar temos o metodo deleteById() nesse devemos passar apenas o ID e temos o método delete() nesse temos que passar o objeto que queremos apagar, no caso autor.
+
+Ficará assim:
+
+@Controller("/autores/{id}")
+class DeletaAutorController(val autorRepository: AutorRepository) {
+
+    @Delete
+    fun deleta(@PathVariable id: Long): HttpResponse<Any> {
+
+        val possivelAutor = autorRepository.findById(id)
+        if (possivelAutor.isEmpty) {
+            return HttpResponse.notFound()
+        }
+
+        autorRepository.deleteById(id)
+
+        return HttpResponse.ok()
+    }
+}

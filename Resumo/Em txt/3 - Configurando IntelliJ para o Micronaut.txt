@@ -1,0 +1,12 @@
+Configurando IntelliJ para o Micronaut:
+Aprendemos que o Micronaut cria as coisas durante a compilação, por isso teremos que fazer a seguinte configuração na IDE (ativar a Annotation Processors):
+File -> Settings... -> No filtro escrever Annotation, devemos entrar na sub-seção a Annotation Processors que encontrá-se na seção Build, Execution, Deployment -> Dentro da sub-seção de Annotation Processors  marcar a opção: Enable annotation processing -> Clicar em apply e ok.
+
+Agora precisamos fazer outra configuração, pois o IntelliJ juntamente com Gradle tenta agilizar a compilação com a utilização de Cache, só que isso não funciona com o Micronaut, vamos ter que fazer o Gradle sempre dar cum "Clean" no projeto antes de subir. Para isso fazer: 
+
+1)Executar o arquivo Application.kt do projeto e depois pode parar a execução;
+2)Ao lado do botão play e pause da ide ficou uma caixinha escrito Application.kt (arquivo que executamos). Clique nele e depois em Edit Configurations...
+3)Na tela que se abriu, na parte inferior chamada de Before Lauch adicionar mais uma tarefa, para isso: clicar no icone '+' -> selecionar Run Gradle Task -> Vai abrir uma janela, temos que clicar no icone 'pasta' e selecionar o nosso projeto para preencher o campo Gradle project, agora no campo Tasks devemos escrever 'clean' -> Depois basta clicar em Ok e seremos enviado de volta para a tela anterior.
+4)Estando novamente na tela anterior, ir na parte inferior chamada de Before Lauch e veremos que nossa task foi adicionada, mas foi adicionada depois da task build. Devemos deixar a task de clean antes de build, para isso basta selecionar a task clean e clicar no 'icone' setinha para cima, assim faremos essa task ser executada antes do build!
+5)Clicar em Apply e depois em Ok.
+6)Executar novamente o projeto e ver na parte inferior da IDE se o Clean foi executado!

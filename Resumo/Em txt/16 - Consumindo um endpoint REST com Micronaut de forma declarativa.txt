@@ -1,0 +1,113 @@
+Consumindo um endpoint REST com Micronaut de forma declarativa:
+
+Agora vamos ter que consumir um serviço externo, será uma outra API Rest que ao passar para ela o CEP é retornado o endereço daquele CEP. Para fazer isso aqui teremos que usar um Client Http igual usamos com Spring. No Spring há vários Clients Http, existe o Rest Template, o Feign, entre outros. Aqui no Micronaut vamos utilizar um client http parecido com o Feign do Spring, ou seja, vamos criar uma interface que lembra as interfaces do tipo Repository, e nessa interface vamos indicar qual a URI do serviço externo (indicaremos isso em cima da assinatura da interface) e teremos que criar funções para fazer a consumação do serviço externo. É nas funções que vamos indicar: o verbo HTTP utilizado, o parâmetro que será enviado e o retorno que o serviço nos dará.
+
+O intuito desse projeto é apenas aprender, por isso o retorno da consulta será do tipo HttpResponse, podemos fazer isso, mas a documentação do Micronaut deixa claro que há tipos específicos para receber a resposta de um serviço externo, ao utilizar tipos não específicos estaremos fazendo uma Request Bloqueante, ou seja, vamos bloquear a thread até a resposta chegar e isso não é viável.
+
+Para implementar essa funcionalidade, siga o passo a passo:
+
+1) Na classe AutorRequest vamos adicionar duas property, o cep: String e numero: String, pois agora o cliente de nossa API precisará informar esses dados para cadastrar um Autor:
+
+data class AutorRequest(
+    @field:NotBlank val nome: String,
+    @field:NotBlank @field:Email val email: String,
+    @field:NotBlank @field:Size(max = 400) val descricao: String,
+    @field:NotBlank val cep: String,
+    @field:NotBlank val numero: String
+) 
+
+2) Agira vamos criar nosso Client Htpp, ou seja, o responsável por fazer a consulta externa:
+@Client("https://viacep.com.br/ws")
+interface EnderecoClient {
+
+    @Get("/{cep}/json/")
+    fun consulta(cep: String) : HttpResponse<EnderecoResponse>
+}
+
+Em cima da interface foi colocado a anotação @Client e nela indicamos o endereço (URL) do serviço que vamos utilizar, o ideal é colocar com variável de ambiente, só não fiz isso porque esse é um projeto teste. Criamos uma função anotada com @Get, pois o verbo para consumir a API Externa será com o esse verbo, o parâmetro a ser enviado para esse API externa é o CEP e o seu retorno será um HttpResponse<EnderecoResponse>. Como ainda não temos a classe EnderecoResponse teremos que criar no passo posterior;
+
+3) Criar a classe EnderecoResponse, essa classe vai guardar a resposta do serviço externo:
+
+data class EnderecoResponse(
+    val logradouro: String,
+    val localidade: String,
+    val uf: String
+
+) {
+}
+
+4)Agora na classe CadastraAutorController, antes de transformar um AutorRequest em Autor vamos ter que fazer a consulta ao serviço externo, passando o CEP e guardando a resposta na classe EnderecoResponse. Lembre-se vamos precisar de uma instancia de EnderecoClient e para isso vamos usar o consrtrutor da classe CadastraAutorController. 
+Tendo o EnderecoResponse preenchido vamos enviá-lo via parâmetro para o método converteAutorRequestParaAutor(), pois agora para criar um Autor vai precisar de um Endereco. Ficando assim:
+
+@Controller("/autores")
+@Validated
+class CadastraAutorController(
+    val autorRepository: AutorRepository,
+    val enderecoClient: EnderecoClient
+) {
+
+    @Post
+    fun cadastra(@Body @Valid request: AutorRequest): HttpResponse<Any> {
+
+        val enderecoResponse = enderecoClient.consulta(request.cep)
+
+        val autor = request.converteAutorRequestParaAutor(enderecoResponse.body()!!)
+        
+autorRepository.save(autor)
+
+        val uri = UriBuilder.of("/autores/{id}").expand(mutableMapOf(Pair("id", autor.id)))
+
+        return HttpResponse.created(uri)
+    }
+
+}
+
+5) Agora na classe AutorRequest, no método converteAutorRequestParaAutor teremos que criar um objeto Endereco, por esse motivo vamos criar a classe Endereco, e seu construtor receberá o EnderecoResponse e o numero, pois é EnderecoResponse que tem os valores de rua, cidade e estado e vamos usá-los para construir nosso objeto Endereco:
+
+@Embeddable
+class Endereco(
+    enderecoResponse: EnderecoResponse,
+    val numero: String
+) {
+    val rua = enderecoResponse.logradouro
+    val cidade = enderecoResponse.localidade
+    val estado = enderecoResponse.uf
+}
+
+O @Embeddable é porque optamos em não criar a tabela Endereco no banco, optamos pelo seguinte: cada property dessa classe virará uma coluna na tabela Autor.
+
+6) Agora na classe AutorRequest, no método converteAutorRequestParaAutor teremos que enviar o objeto Endereco para o construtor de Autor:
+
+@Introspected
+data class AutorRequest(
+    @field:NotBlank val nome: String,
+    @field:NotBlank @field:Email val email: String,
+    @field:NotBlank @field:Size(max = 400) val descricao: String,
+    @field:NotBlank val cep: String,
+    @field:NotBlank val numero: String
+) {
+
+    fun converteAutorRequestParaAutor(enderecoResponse: EnderecoResponse): Autor {
+        val endereco = Endereco(enderecoResponse, numero)
+        return Autor(nome, email, descricao, endereco)
+    }
+}
+
+7) Agora na classe Autor temos que passar a receber no seu construtor um Endereco, e configurá-lo para cada property de Endereco virar uma coluna na tabkea Autor (a configuração é feita na classe Autor e Endereco, não se esqueça!). Vai ficar assim:
+
+@Entity
+class Autor(
+    val nome: String,
+    val email: String,
+    var descricao: String,
+    @field:Embedded val endereco: Endereco
+) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+
+    val criadoEm: LocalDateTime = LocalDateTime.now()
+
+}
+
+

@@ -1,0 +1,3 @@
+Fluxo completo para salvar um objeto no banco de dados:
+
+Nesse capítulo foi apresentado um vídeo que engloba todos até o momento. Não apresentou nenhuma novidade.

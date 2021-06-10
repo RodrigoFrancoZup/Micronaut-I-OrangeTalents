@@ -1,0 +1,17 @@
+Conversão de um objeto de entrada para um objeto de domínio:
+
+No metodo cadastra da classe AutorController estamos recebendo o objeto AutorRequest, esse é uma representação de Autor, mas quando formos salvar no banco de dados vamos precisar de um Autor real. Para isso precisamos converter objeto AutorRequest para o tipo Autor. Vamos fazer isso no passo a passo:
+1)Criar a classe Autor, e no seu construtor receber os parâmetros que serão as properties. Ficará assim:
+
+class Autor(
+    val nome: String,
+    val email: String,
+    val descricao: String
+) {
+}
+
+2)Na classe AutorRequest, vamos criar uma função para fazer essa conversão, no caso vamos chamá-la de converteAutorRequestParaAutor() e seu retorno será um Autor. É igual faziamos no Spring. Ficará assim: 
+
+fun converteAutorRequestParaAutor(): Autor{
+    return Autor(nome, email, descricao)
+}

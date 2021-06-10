@@ -1,0 +1,19 @@
+Setup de um projeto Micronaut:
+Assim como faziamos com o Spring, vamos fazer no Micronaut. Vamos entrar num site, configurar o projeto com o nome, linguagem e dependências necessárias. Por fim faremos o download do projeto e o abriremos na IDE.
+Para esse primeiro projeto vamos seguir esse passo a passo:
+
+1)Acessar o site: https://micronaut.io/ e clicar no botão lauch. Seremos enviado para https://micronaut.io/launch/
+
+2)Vamos configurar o projeto da seguinte forma: 
+Application Type = Micronaut Application
+Java Version = 11 (Mesmo se for utilizar Kotlin)
+Base Package = br.com.zup
+Name = nossa-casa-do-codigo
+Micronaut Version = 2.5.5
+Language = Kotlin
+Build = Gradle Kotlin
+Test Framework = Junit
+
+3)Clicar no botão " + Features ", no filtro escrever jpa para encontrar a dependência chamada data-jpa, ao encontr-lá basta selecioná-la e depois clicar em Done que a mesma será adicionada ao projeto.
+
+4)Clicar no botão Generate Project e fazer download do mesmo no formato zip.

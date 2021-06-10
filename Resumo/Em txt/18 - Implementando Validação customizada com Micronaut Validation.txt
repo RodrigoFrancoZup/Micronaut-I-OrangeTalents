@@ -1,0 +1,49 @@
+Implementando Validação customizada com Micronaut Validation:
+
+Igual no Spring podemos criar nossas próprias anotações, e até sua criação será parecida. Teremos que criar primeiro a interface que de fato é a anotação e depois uma classe que irá implementar essa interface (no Kotlin podemos é comum fazermos a interface e classe no mesmo arquivo). Será na classe que vamos escrever a lógica que a anotação terá (sua validação).
+
+Vou criar uma anotação chamada nome, vamos usar com @nome. E veremos se o some digitado pelo autor é de fato um nome, se não contem números!
+
+Siga o passo a passo:
+
+Obs: Para a validação funcionar não podemos estar usando a dependencia de validation do Hibernat. Devemos usar a: "io.micronaut:micronaut-validation"
+
+1) Na classe AutorRequest a property nome vai ganhar a anotação @nome, ficando assim: 
+
+data class AutorRequest(
+    @field:NotBlank @field:Nome val nome: String,
+    @field:NotBlank @field:Email val email: String,
+    @field:NotBlank @field:Size(max = 400) val descricao: String,
+    @field:NotBlank val cep: String,
+    @field:NotBlank val numero: String
+)
+
+2) Ainda não temos a annotation class Nome, vamos criá-la:
+
+@MustBeDocumented
+@Target(FIELD, CONSTRUCTOR)
+@Retention(RUNTIME)
+@Constraint(validatedBy = [NomeValidator::class])
+annotation class Nome(
+    val message: String = "O que você digitou não é nome válido!",
+)
+
+3) Na annotation class Nome defenimos no Target a classe NomeValidator, então vamos criá-la:
+
+@Singleton
+class NomeValidator : ConstraintValidator<Nome, String> {
+
+    override fun isValid(
+        value: String?,
+        annotationMetadata: AnnotationValue<Nome>,
+        context: ConstraintValidatorContext
+    ): Boolean {
+        if (value == null) {
+            return true
+        }
+        return value.matches("[A-Z][a-z].* [A-Z][a-z].*".toRegex())
+    }
+
+}
+
+

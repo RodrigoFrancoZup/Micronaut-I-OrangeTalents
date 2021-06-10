@@ -1,0 +1,46 @@
+Métodos que geram queries no Micronaut Data:
+
+Vamos implementar agora a busca de um Autor por email, e a URL que consultará será por exemplo: 
+	localhost:8080/autores?email=rodrigo@gmail.com
+
+Como nessa URL tem uma variável com '?' indica que estamos usando um QueryParameter. Vamos deixar o valor padrão dessa QueryParameter como vázio, assim se seu valor continuar vazio é que o usuário não passou e-mail para filtrar a busca e por isso vamos retornar todos autores cadastrados.
+Assim como no Spring o Repository do Micronaut permite que criemos funções personalizadas sem escrever query, basta criar no Repository uma função que comece com o nome findBy mais o nome da property, nesse caso ficará: findByEmail, pois email é uma property de Autor. Podemos fazer diversas buscas dessa forma, igualmente no Spring.
+
+O resultado dessa operação será:
+
+A URL localhost:8080/autor/email?email=rodrigo@gmail.com listará o Autor com email rodrigo@gmail.com ou um 404 caso não tenha autor com esse email.
+
+A URL localhost:8080/autor/email listará todos autores.
+
+A interface AutorRepository ficará assim:
+@Repository
+interface AutorRepository : JpaRepository<Autor, Long>{
+
+    fun findByEmail(email: String) : Optional<Autor>
+}
+
+
+A classe AutorPorEmailController ficará assim:
+
+@Controller("/autor/email")
+class AutorPorEmailController(val autorRepository: AutorRepository) {
+
+    @Get
+    fun buscaPorEmail(@QueryValue(defaultValue = "") email: String): HttpResponse<Any> {
+        if (email.isBlank()) {
+            val autores = autorRepository.findAll()
+            val autoresResponse = autores.map { autor -> AutorResponse(autor) }
+            return HttpResponse.ok(autoresResponse)
+        }
+        val possivelAutor = autorRepository.findByEmail(email)
+        if (possivelAutor.isEmpty) {
+            return HttpResponse.notFound()
+        } else {
+            val autorResponse = AutorResponse(possivelAutor.get())
+            return HttpResponse.ok(autorResponse)
+        }
+
+    }
+}
+
+Obs: O mentor não criou outra classe ou metodo, ele mudou a listagem de todos autores, caso usuario passe email ele aplica o filtro, caso contrário continuará listando todos.

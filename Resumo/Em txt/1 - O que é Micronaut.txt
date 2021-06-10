@@ -1,0 +1,4 @@
+O que é Micronaut?
+Micronaut é um framework Java e que pode ser uilizado com o Kotlin (será com ele que vamos utilizar). 
+Qual é o seu diferencial? Para explicar isso vamos compará-lo com outro framework, no caso o Spring. No Spring quando damos start em uma aplicação todo o seu contexto é carregado para memória, todos os seus beans são criados e alocados em memória, e isso aumenta o tempo de start-up e de consumo de memória da aplicação. 
+No Micronaut esse processo será diferente, utilizando a técnica AOT a criação dos beans e a injeção de dependência ocorrerá durante a compilação, ou seja, quando formos subir a aplicação nenhum contexto precisará ser carregado, logo uma aplicação em Micronaut tem um tempo menor para  ser levantada.

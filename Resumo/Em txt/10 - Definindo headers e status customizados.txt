@@ -1,0 +1,12 @@
+Definindo headers e status customizados:
+
+Ao fazermos o cadastro do Autor não estamos retornando nada, mas poderiamos devolver o status 201 (Created) juntamente com a URI que representa o recurso criado. No Spring usavamos o retorno ResponseEntity, aqui no Micronaut o retorno será HttpResponse (import tem que ser do Micronaut). A função cadastra ficará assim:
+
+@Post
+fun cadastra(@Body @Valid request: AutorRequest) : HttpResponse<Any>{
+    val autor = request.converteAutorRequestParaAutor()
+    autorRepository.save(autor)
+
+    val uri = UriBuilder.of("/autores/{id}").expand(mutableMapOf(Pair("id", autor.id)))
+    return HttpResponse.created(uri)
+}

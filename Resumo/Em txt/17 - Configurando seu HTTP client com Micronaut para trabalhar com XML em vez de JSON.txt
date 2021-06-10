@@ -1,0 +1,43 @@
+Configurando seu HTTP client com Micronaut para trabalhar com XML em vez de JSON:
+
+Até agora estamos usando o formato JSON, mas caso qusissemos consumir ou produzir no formato XML também é possível! Para isso basta adicionar uma dependencia do micronaut para serializar e desserializar em XML. Essa dependencia chama-se: micronaut-jackson-xml
+
+Tendo essa dependencia agora basta indicar que queremos consumir ou produzir em XML e isso faremos com as anotações em cima das funçoes de um ClientHttp ou Controlle (também é possivel passar parâmetro para configurar isso direto na anotação que define o verbo Http - ou seja, passar dentro da anotação do verbo - , por exemplo @Get(...), @Post(...), etc. Mas acho mais intuitivo usar a anotação própria para isso)
+
+Primeiro faça - Adicionar a dependencia na arquivo build.gradle, dentro da seção dependencies:
+
+	implementation("io.micronaut.xml:micronaut-jackson-xml")
+
+Veja o exemplo de como configurar para consumir um xml:
+
+@Get("/{cep}/xml/")
+@Consumes(MediaType.APPLICATION_XML)
+fun consultaXml(cep: String) : HttpResponse<EnderecoResponse>
+
+OU:
+
+@Get("/{cep}/xml/", consumes = [MediaType.APPLICATION_XML])
+fun consultaXml2(cep: String) : HttpResponse<EnderecoResponse>
+
+Obs: Assim como há o @Consumes e o consumes = [] também há o @Produces e produces = []
+
+Veja o exemplo de produzir conteúdo em XML na classe Controller:
+
+@Get
+@Produces(MediaType.APPLICATION_XML)
+fun lista(): HttpResponse<List<AutorResponse>>? {
+    val autores = autorRepository.findAll()
+    val listaAutoresResponse = autores.map { autor -> AutorResponse(autor) }
+    return HttpResponse.ok(listaAutoresResponse)
+}
+
+OU:
+
+    @Get(produces = [MediaType.APPLICATION_XML])
+        fun lista(): HttpResponse<List<AutorResponse>>? {
+        val autores = autorRepository.findAll()
+        val listaAutoresResponse = autores.map { autor -> AutorResponse(autor) }
+        return HttpResponse.ok(listaAutoresResponse)
+    }
+}
+

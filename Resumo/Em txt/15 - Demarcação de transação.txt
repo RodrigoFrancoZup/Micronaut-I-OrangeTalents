@@ -1,0 +1,53 @@
+Demarcação de transação:
+
+Assim como ocorre no Spring,  toda função de um Repository é executada dentro de uma transação (é aberta e gerenciada de forma automática pelo framework em questão, seja Spring ou Micronaut), por exemplo, quando executamos o autorRepository.findByEmail(email: String) foi aberta uma transação e logo após o fim da execução da função findByEmail ocorreu o fechamento da transação.
+Só que assim como no Spring podemos abrir e gerenciar de forma "manual" as transações e para isso basta usar a anotação @Transactional (import do javax.persistence), por exemplo na classe AtualizaAutorController na função atualiza() poderiamos abrir a transação antes de começar o método atualiza(), ficando assim:
+
+@Put
+@Transactional
+fun atualiza(@PathVariable id: Long, descricao: String): HttpResponse<Any> {
+
+    val possivelAutor = autorRepository.findById(id)
+    if (possivelAutor.isEmpty) {
+        return HttpResponse.notFound()
+    }
+
+    val autor = possivelAutor.get()
+    autor.descricao = descricao
+   
+    return HttpResponse.ok(AutorResponse(autor))
+}
+
+Note que no corpo do método retiramos a linha:
+	autorRepository.update(autor)
+Pois agora o método todo está na transação, logo quado fazemos a busca de um autor no método autorRepository.findById() o objeto já encontra-se no estado Managed da Jpa e assim permanece, logo quando fazemos autor.descricao = descricao o mesmo já será atualizado!
+
+Só que a anotação @Transactional nós da um trabalho extra para poder ser utilizado, todo método que receber essa anotação terá que ser "open" e a classe desse método também, nesse caso o método atualiza() e a classe AtualizaAutorController teriam que ser "open".
+Existe um plugin do Kotlin chamado All-open compiler que nos ajuda com isso, através de uma configuração podemos falar quais classes e metodos serão open. Para utilizar esse plugin siga o passo a passo:
+
+1) No arquivo build.gradle, devemos adicionar o script com o seguinte código (Colocar antes da seção script colocar o código):
+Primeira opção para quem usa o Gradle com Groovy:
+
+buildscript {
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlin_version"
+    }
+}
+
+Após isso temos que aplicar esse plugin, então após a seção plugins colocar o trecho: 
+	apply plugin: "kotlin-allopen"
+
+OU
+
+No nosso caso usamos o Gradle para Kotlin, basta adicionar dentro da seção plugins o trecho:
+	id("org.jetbrains.kotlin.plugin.allopen") version "1.4.32"
+
+2) Ainda no arquivo build.gradle vamos configurar quais as classes vão ser open. Vamos poder configurar indicando o nome completo da classe (pacote + classe),colocar somente o pacote ou então falar que queremos deixar open toda classe que tiver uma determinada anotação - será assim que vamos fazer, toda classe anotada com @Controller será open. Para isso temos que colocar após a seção srcipt o trecho:
+
+allOpen {
+    annotation("io.micronaut.http.annotation.Controller")
+}
+	
+
+
+ 

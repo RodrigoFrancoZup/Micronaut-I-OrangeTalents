@@ -1,0 +1,45 @@
+Micronaut Testing - controle transacional e banco em memória:
+
+Temos que entender os seguintes fatos de um teste no micronaut:
+
+⦁	Todas as funções anotadas com @Test sofrem rollback após serem executados, logo se o teste salva algo no banco, após o teste esse item será apagado! (Apenas os metodos @Before, @After são comitados, ou seja, não sofrem rollback);
+⦁	Todas as funções, seja ela @Test, @Before, etc, possuem sua própria transação! Ou seja, cada função abre e fecha uma transação diferente;
+
+E nós poderemos mudar esse comportamento! Vamos ver a seguir!
+
+Agora, siga o passo a passo:
+
+1) Vamos utilizar o banco H2 para os testes, ou seja, teremos um banco para desenvolvimento e outro para testes. Para fazer isso devemos colocar no arquivo Build.Gradle, dentro da seção dependencies:
+testImplementation("com.h2database:h2")
+
+2) Agora na mesma pasta que temos o arquivo application.yml criar o arquivo application-test.yml, ele terá o seguinte conteudo:
+
+datasources:
+  default:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driverClassName: org.h2.Driver
+
+##
+# Habilita log do Contexto transacional
+##
+
+logger:
+  levels:
+    io.micronaut.transaction: DEBUG
+
+3) Agora poderemos mudar o comportamento das transações das classes de teste. Para isso, basta adicionar parâmetros na anotação @MicronautTest que a classe de teste recebe. Veja o exemplo:
+
+@MicronautTest(
+//Padrão é true. Configura se cada função dará rollback após ser executada
+    rollback = false, 
+
+// Padrao é SEPARETE_TRANSACTION. Configura se cada função terá sua própria transação
+    transactionMode = TransactionMode.SINGLE_TRANSACTION, 
+
+//O Padão já é true, mas aqui poderiamos desativar a transação! Não haveria transação na execução das funções
+    transactional = true 
+
+)
+internal class CadastraAutorControllerTest {
+	//Codigo aqui!
+}

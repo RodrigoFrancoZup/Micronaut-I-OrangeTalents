@@ -1,0 +1,46 @@
+Retornando dados em JSON:
+
+Agora para fazer uma listagem de Autores teremos um outro problema, pois estamos usando o Hibernate e o mesmo para ler dados do banco de dados exige que a classe Entidade, no nosso caso é a classe Autor deve ter um construtor vázio (padrão). Para solucionar isso, existe um Plugin chamado No-arg compiler plugin que vamos adicionar no arquivo build.gradle, esse plugin criará o construtor Default em todas as classes Entity e Embedded.
+Após adicionar o plugin podemos criar a classe que representará o objeto Autor de saída, no caso será a classe AutorResponse. O construtor dessa classe deverá receber o objeto Autor.
+Na classe AutorController vamos ter que criar uma função do verbo Get, essa função não receberá nada de parâmetro e retornara uma lista de Autor. Para transformar a lista de Autor para uma lista de AutorResponse devemos utilizar a função map!
+Para implementar isso tudo, vamos seguir o passo a passo:
+
+1) Vamos criar uma classe controller por funcionalidade, a classe AutorController foi renomeada para CadastraAutorController, vamos agora criar a classe ListaAutoresController:
+
+@Controller("/autores")
+class BuscaAutoresController(val autorRepository: AutorRepository) {
+
+    @Get
+    fun lista(): HttpResponse<List<AutorResponse>>? {
+        val autores = autorRepository.findAll()
+        val listaAutoresResponse = autores.map { autor -> AutorResponse(autor) }
+        return HttpResponse.ok(listaAutoresResponse)
+    }
+}
+
+2) Vamos agora criar a class AutorResponse:
+
+	class AutorResponse(autor: Autor) {
+
+    	val nome = autor.nome
+    	val email = autor.email
+    	val descricao = autor.descricao
+	}
+
+
+3) Vamos adicionar o plugin no arquivo build.gradle, mas o jeito que estamos usando o Gradle vai influenciar a maneira de colocarmos esse plugin. 
+Se estivermos usando o Gradle com Groovy: ANTES da seção plugins colocar:
+
+	buildscript {
+    	dependencies {
+        	classpath "org.jetbrains.kotlin:kotlin-noarg:$kotlin_version"
+    	}
+	}
+
+e DEPOIS da seção plugins colocar:
+	apply plugin: "kotlin-noarg"
+
+Se estivermos usando o build.gradle.kts (Maneira que estamos fazendo), basta colocar dentro da seção plugins:
+
+	id("org.jetbrains.kotlin.plugin.jpa") version "1.5.10"
+

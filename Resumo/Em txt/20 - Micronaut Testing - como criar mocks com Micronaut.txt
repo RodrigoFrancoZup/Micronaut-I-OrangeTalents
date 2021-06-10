@@ -1,0 +1,77 @@
+Micronaut Testing - como criar mocks com Micronaut:
+
+Agora vamos testar o cadastro de um Autor, mas temos que lembrar que para cadastrar um Autor nós passavamos um CEP e com esse CEP nossa API fazia uma consulta externa para obter o endereço. Só que não queremos fazer essa conulta externa no nosso teste, então podemos Mockar (Simular) ele!
+Vamos agorar executar esse teste no banco de dados H2, diferente do banco que estamos utilizando!
+Para isso siga o passo a passo:
+
+1) No arquivo Build.Gradle, dentro da seção dependencies adicionar as dependencias:
+testImplementation("org.mockito:mockito-core:3.8.0")
+testImplementation("com.h2database:h2")
+
+2) Agora na mesma pasta que temos o arquivo application.yml criar o arquivo application-test.yml, ele terá o seguinte conteudo:
+
+datasources:
+  default:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    driverClassName: org.h2.Driver
+
+##
+# Habilita log do Contexto transacional
+##
+
+logger:
+  levels:
+    io.micronaut.transaction: DEBUG
+
+3) Agora vamos criar a classe de teste CadastraAutorControllerTest, podemos ir na classe CadastraAutorController e pedir para a IDE fazer a classe teste dela. Na classe CadastraAutorControllerTest vamos anotá-la com @MicronautTest;
+
+4) Nesse teste vamos precisar de um ClienteHttpp para poder fazer a requsição do nosso método post, vamos precisar de um AutorRequest para enviarmos como body nessa requisição, vamos precisar de um mock de enderecoClient para simular a consulta externa e de um EnderecoResponse para ser a resposta da consulta externa simulada. 
+
+A classe desse teste ficou:
+
+@MicronautTest
+internal class CadastraAutorControllerTest {
+
+    //Lateinit indica que será inicializado no futuro!
+    @field:Inject
+    @field:Client("/")
+    lateinit var client: HttpClient
+
+    //Já defenimos no método enderecoMock, que esse objeto será mockado
+    //Criamos uma referencia agora, apenas para podermos configurar suas ações!
+    @field:Inject
+    lateinit var enderecoClient: EnderecoClient
+
+    @Test
+    internal fun cadastrarUmNovoAutor() {
+
+        //Cenario
+        val autorRequest = AutorRequest("Rafael Pont", "rafael.ponte@zup.com.br", "O mentor", "123456", "1")
+        val enderecoResponse = EnderecoResponse(logradouro = "Rua das Laranjeiras", localidade = "Rio de Janeiro", uf = "RJ")
+
+        //Aqui estamos simulando: quando o método consulta do enderecoCliente for executado a resposta será HttpResponse.ok com Body de enderecoResponse já criado por nós!
+        Mockito.`when`(enderecoClient.consulta(autorRequest.cep)).thenReturn(HttpResponse.ok(enderecoResponse))
+
+        val request = HttpRequest.POST("/autores", autorRequest)
+
+        //Açao
+        val response = client.toBlocking().exchange(request, Any::class.java)
+
+        //Verificacao
+        assertEquals(HttpStatus.CREATED, response.status)
+        assertTrue(response.headers.contains("Location"))
+        assertTrue(response.header("Location")!!.matches("/autores/\\d".toRegex()))
+
+    }
+
+    @MockBean(EnderecoClient::class)
+    fun enderecoMock() : EnderecoClient{
+        return Mockito.mock(EnderecoClient::class.java)
+    }
+}
+
+O método enderecoMock() é para mockar o objeto do tipo EnderecoClient. Mesmo com esse método é preciso criar na classe uma referencia:
+@field:Inject
+    lateinit var enderecoClient: EnderecoClient
+
+pois será através dessa referencia que vamos poder configurar (simular) as açoes e respostas desse objeto!

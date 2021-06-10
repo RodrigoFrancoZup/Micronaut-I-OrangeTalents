@@ -1,0 +1,25 @@
+Recebendo dados via JSON:
+Passo a passo:
+1) Criamos a classe AutorRequest, essa será a classe de representação do objeto da classe Autor. Ela servirá como "casca" para a entrada de dados. No kotlin podemos selecionar o tipo Data Class, e nesse caso vamos usar esse tipo, pois com ele temos alguns métodos já implementados como Equals e Hashcode, toString, entre outros...
+
+data class AutorRequest(
+    val nome: String,
+    val email: String,
+    val descricao: String
+) {
+
+}
+
+2) Criar agora a classe que recebe as requisições, no caso será AutorController. Uma classe para ser controller com micronaut recebe a anotação @Controller e nessa mesma anotação podemos mapear, no caso ficou @Controller("/autores"). Assim para acessar algum método dessa classe vamos chamar a URL: localhost:8080/autores
+Ainda na classe AutorController, vamos criar a função cadastra (essa será responsável por cadastrar um autor) anotada com @Post, ou seja, essa função será atendida pelo verbo Post.  Essa função receberá via parâmetros um AutorRequest (classe que serve como "casca" para Autor). Nesse parâmetro não precisamos colocar nenhuma anotação, pois o micronaut vai saber que é via corpo (body) que receberá o mesmo, mas podemos por a anotação "@Body" para ficar mais explícito que esse parâmetro está vindo via Body da requisição.
+
+@Controller("/autores")
+class AutorController {
+
+    @Post
+    fun cadastra(@Body request: AutorRequest){
+        println(request)
+    }
+}
+
+3) Agora no Postman, podemos fazer uma requisiçao do tipo Post para a url: localhost:8080/autores e no corpo enviar um AutorRequest.
